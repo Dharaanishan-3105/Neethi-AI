@@ -12,8 +12,7 @@ python-docx==0.8.11
 Pillow==10.0.1
 
 # AI and ML (CPU-only versions for faster install)
-torch==2.0.1+cpu
-torchvision==0.15.2+cpu
+# Note: torch and torchvision are installed separately from PyTorch's CPU index in Dockerfile
 easyocr==1.7.0
 opencv-python-headless==4.8.1.78
 numpy==1.24.3
