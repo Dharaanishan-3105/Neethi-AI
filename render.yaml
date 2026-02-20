@@ -1,0 +1,34 @@
+services:
+  - type: web
+    name: neethi-ai
+    env: python
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install -r requirements-prod.txt
+    startCommand: waitress-serve --host=0.0.0.0 --port=$PORT neethi:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: neethi-postgres
+          property: connectionString
+    healthCheckPath: /
+    autoDeploy: true
+
+  - type: pserv
+    name: neethi-postgres
+    env: postgresql
+    plan: starter
+    region: oregon
+    postgresMajorVersion: 15
+    autoDeploy: true

@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% block title %}NeethiAI - Your Legal AI Companion{% endblock %}
+    </title>
+
+    <!-- PWA Meta Tags -->
+    <meta
+      name="description"
+      content="AI-powered legal assistant for Tamil and English queries with document analysis"
+    />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="NeethiAI" />
+
+    <!-- PWA Icons -->
+    <link
+      rel="icon"
+      type="image/jpeg"
+      sizes="192x192"
+      href="{{ url_for('static', filename='icons/logo.jpg') }}"
+    />
+    <link
+      rel="icon"
+      type="image/jpeg"
+      sizes="512x512"
+      href="{{ url_for('static', filename='icons/logo.jpg') }}"
+    />
+    <link
+      rel="apple-touch-icon"
+      href="{{ url_for('static', filename='icons/logo.jpg') }}"
+    />
+    <link
+      rel="manifest"
+      href="{{ url_for('static', filename='manifest.json') }}"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Font Awesome -->
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Custom CSS -->
+    <link
+      href="{{ url_for('static', filename='css/style.css') }}"
+      rel="stylesheet"
+    />
+
+    {% block extra_css %}{% endblock %}
+  </head>
+  <body>
+    <!-- Modern Navigation with Glassmorphism -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-custom">
+      <div class="container">
+        <a
+          class="navbar-brand d-flex align-items-center hover-lift"
+          href="{{ url_for('index') }}"
+          style="transition: var(--transition-fast)"
+        >
+          <img
+            src="{{ url_for('static', filename='icons/logo.jpg') }}"
+            alt="NeethiAI Logo"
+            width="36"
+            height="36"
+            class="me-2 rounded-circle"
+            style="border: 2px solid var(--border-color)"
+          />
+          <span class="fw-bold">NeethiAI</span>
+        </a>
+
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav me-auto">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('chat') }}">
+                <i class="fas fa-comments me-1"></i>Chat
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+
+          <ul class="navbar-nav">
+            {% if current_user.is_authenticated %}
+            <li class="nav-item dropdown">
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+              >
+                <i class="fas fa-user me-1"></i>{{ current_user.name }}
+              </a>
+              <ul class="dropdown-menu">
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('profile') }}">
+                    <i class="fas fa-user-cog me-2"></i>Profile
+                  </a>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                  </a>
+                </li>
+              </ul>
+            </li>
+            {% else %}
+            <li class="nav-item">
+              <a class="nav-link" href="{{ url_for('login') }}">
+                <i class="fas fa-sign-in-alt me-1"></i>Login
+              </a>
+            </li>
+            <li class="nav-item">
+              <a
+                class="nav-link"
+                href="{{ url_for('login', mode='register') }}"
+              >
+                <i class="fas fa-user-plus me-1"></i>Register
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Modern Flash Messages with Glassmorphism -->
+    {% with messages = get_flashed_messages() %} {% if messages %}
+    <div class="container mt-3">
+      {% for message in messages %}
+      <div
+        class="alert alert-info alert-dismissible fade show glass-card animate-slide-up hover-lift"
+        role="alert"
+        style="color: var(--text-primary)"
+      >
+        <i
+          class="fas fa-info-circle me-2"
+          style="
+            background: linear-gradient(
+              135deg,
+              var(--neural-blue),
+              var(--activation-blue)
+            );
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+          "
+        ></i
+        >{{ message }}
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="alert"
+          style="filter: invert(1)"
+        ></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %} {% endwith %}
+
+    <!-- Main Content -->
+    <main>{% block content %}{% endblock %}</main>
+
+    <!-- Modern Footer with Glassmorphism (hidden on chat page for app-like layout) -->
+    {% if request.endpoint != 'chat' %}
+    <footer
+      class="py-4 mt-5"
+      style="
+        background: var(--glass-bg);
+        backdrop-filter: var(--backdrop-blur);
+        -webkit-backdrop-filter: var(--backdrop-blur);
+        border-top: 1px solid var(--glass-border);
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+      "
+    >
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-md-6">
+            <h5 class="text-white mb-2 fw-bold">NeethiAI</h5>
+            <p class="mb-0" style="color: var(--text-secondary)">
+              Your Legal AI Companion for Indian Citizens
+            </p>
+          </div>
+          <div class="col-md-6 text-md-end">
+            <p class="mb-1" style="color: var(--text-secondary)">
+              &copy; 2026 HariDharaan &mdash; NeethiAI. All rights reserved.
+            </p>
+            <p class="mb-0" style="color: var(--text-muted)">
+              <small>Disclaimer: This is not professional legal advice.</small>
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    {% endif %}
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    {% block extra_js %}{% endblock %}
+  </body>
+</html>

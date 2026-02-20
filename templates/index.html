@@ -1,0 +1,655 @@
+{% extends "base.html" %} {% block title %}NeethiAI - Legal AI Assistant{%
+endblock %} {% block content %}
+<!-- Hero -->
+<section
+  class="hero-section py-5"
+  style="
+    min-height: 78vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  "
+>
+  <div class="container">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="animate-slide-up">
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <div
+              class="glass-card rounded-circle d-inline-flex align-items-center justify-content-center animate-float"
+              style="width: 64px; height: 64px; padding: 0"
+            >
+              <img
+                src="{{ url_for('static', filename='icons/logo.jpg') }}"
+                alt="NeethiAI Logo"
+                width="56"
+                height="56"
+                class="rounded-circle"
+              />
+            </div>
+            <div>
+              <h1 class="display-4 fw-bold text-white mb-0">NeethiAI</h1>
+              <div
+                class="tamil-text"
+                style="color: var(--text-secondary); font-weight: 500"
+              >
+                உங்கள் சட்ட AI உதவியாளர்
+              </div>
+            </div>
+          </div>
+
+          <p
+            class="lead mb-4"
+            style="
+              color: var(--text-secondary);
+              line-height: 1.8;
+              max-width: 44rem;
+            "
+          >
+            Ask legal questions in English or Tamil and get grounded answers
+            with clear next steps. Upload documents for summaries, and detect
+            suspicious/fake notices.
+          </p>
+
+          <div class="d-flex flex-wrap gap-3 align-items-center">
+            <a
+              href="{{ url_for('login', mode='register') }}"
+              class="btn btn-primary btn-lg hover-lift"
+            >
+              <i class="fas fa-rocket me-2"></i>Start free
+            </a>
+            <a
+              href="{{ url_for('login') }}"
+              class="btn btn-outline-light btn-lg hover-lift glass-card"
+              style="
+                border-color: var(--glass-border);
+                color: var(--text-primary);
+                background: var(--glass-bg);
+              "
+            >
+              <i class="fas fa-sign-in-alt me-2"></i>Login
+            </a>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-4">
+            <span
+              class="glass-card px-3 py-2"
+              style="
+                border-radius: 999px;
+                font-size: 0.95rem;
+                color: var(--text-secondary);
+              "
+            >
+              <i class="fas fa-lock me-2"></i>Private chat history
+            </span>
+            <span
+              class="glass-card px-3 py-2"
+              style="
+                border-radius: 999px;
+                font-size: 0.95rem;
+                color: var(--text-secondary);
+              "
+            >
+              <i class="fas fa-language me-2"></i>English + Tamil
+            </span>
+            <span
+              class="glass-card px-3 py-2"
+              style="
+                border-radius: 999px;
+                font-size: 0.95rem;
+                color: var(--text-secondary);
+              "
+            >
+              <i class="fas fa-check-circle me-2"></i>Source-grounded answers
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-5">
+        <div
+          class="glass-card p-4 p-md-5 animate-scale-in"
+          style="max-width: 520px; margin: 0 auto"
+        >
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <div class="fw-bold text-white">Live preview</div>
+            <div style="color: var(--text-muted); font-size: 0.9rem">
+              <i class="fas fa-circle me-1" style="color: #10b981"></i>Online
+            </div>
+          </div>
+
+          <div class="glass-card p-3 mb-3" style="border-radius: 16px">
+            <div
+              style="
+                color: var(--text-muted);
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+              "
+            >
+              <i class="fas fa-user me-2"></i>You
+            </div>
+            <div class="text-white" style="line-height: 1.6">
+              What should I do if I receive a legal notice?
+            </div>
+          </div>
+
+          <div
+            class="glass-card p-3"
+            style="border-radius: 16px; background: rgba(255, 255, 255, 0.12)"
+          >
+            <div
+              style="
+                color: var(--text-muted);
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+              "
+            >
+              <i class="fas fa-robot me-2"></i>NeethiAI
+            </div>
+            <div style="color: var(--text-secondary); line-height: 1.7">
+              I can help you verify it, understand deadlines, and draft a
+              response checklist. Share the notice text (hide personal IDs) or
+              upload a photo/PDF.
+            </div>
+          </div>
+
+          <div
+            class="mt-4"
+            style="
+              color: var(--text-muted);
+              font-size: 0.9rem;
+              line-height: 1.5;
+            "
+          >
+            <i class="fas fa-info-circle me-2"></i>
+            Not a substitute for a lawyer. For urgent or high-stakes matters,
+            consult a qualified advocate.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features-section py-5" style="position: relative">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto text-center mb-5">
+        <h2 class="display-5 fw-bold text-white mb-3 animate-slide-up">
+          Built for real legal questions
+        </h2>
+        <p class="lead" style="color: var(--text-secondary); font-size: 1.1rem">
+          Fast, clear and grounded assistance — designed for Indian citizens.
+        </p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.1s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-file-alt"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">
+              Document analysis
+            </h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Upload PDF/Word/images and get summaries, key points, and what to
+              do next.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.2s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-comments"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">Legal Q&A</h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Ask in English or Tamil and get structured answers with sources
+              and steps.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.3s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-shield-alt"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">
+              Fake notice detection
+            </h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Detect suspicious notices and get verification steps and safety
+              advice.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.4s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-calculator"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">Tax advisory</h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Guidance for Income Tax and GST questions with practical
+              checklists.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.5s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-microphone"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">Voice chat</h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Speak your legal questions and get voice responses in English or
+              Tamil.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div
+          class="glass-card h-100 animate-scale-in hover-lift"
+          style="animation-delay: 0.6s"
+        >
+          <div class="card-body text-center p-4">
+            <div class="feature-icon mb-3">
+              <i
+                class="fas fa-book"
+                style="
+                  font-size: 3.5rem;
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                  transition: var(--transition);
+                "
+              ></i>
+            </div>
+            <h5 class="card-title text-white mb-3 fw-bold">Legal handbook</h5>
+            <p
+              class="card-text"
+              style="color: var(--text-secondary); line-height: 1.7"
+            >
+              Quick access to common legal procedures like FIR, RTI, and
+              emergency contacts.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="py-5" style="position: relative">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto text-center mb-5">
+        <h2 class="display-5 fw-bold text-white mb-3 animate-slide-up">
+          How it works
+        </h2>
+        <p class="lead" style="color: var(--text-secondary); font-size: 1.1rem">
+          A simple flow designed for clarity — not legal jargon.
+        </p>
+      </div>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="glass-card h-100 p-4 hover-lift">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div
+              class="glass-card d-inline-flex align-items-center justify-content-center"
+              style="width: 44px; height: 44px; border-radius: 14px"
+            >
+              <i class="fas fa-pen" style="color: var(--text-primary)"></i>
+            </div>
+            <div class="fw-bold text-white">Ask / upload</div>
+          </div>
+          <div style="color: var(--text-secondary); line-height: 1.7">
+            Ask a question or upload a notice/document. You can edit questions
+            and keep revisiting history.
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-card h-100 p-4 hover-lift">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div
+              class="glass-card d-inline-flex align-items-center justify-content-center"
+              style="width: 44px; height: 44px; border-radius: 14px"
+            >
+              <i
+                class="fas fa-list-check"
+                style="color: var(--text-primary)"
+              ></i>
+            </div>
+            <div class="fw-bold text-white">Get steps</div>
+          </div>
+          <div style="color: var(--text-secondary); line-height: 1.7">
+            Receive a structured response: key points, deadlines to watch, and a
+            practical checklist.
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="glass-card h-100 p-4 hover-lift">
+          <div class="d-flex align-items-center gap-3 mb-2">
+            <div
+              class="glass-card d-inline-flex align-items-center justify-content-center"
+              style="width: 44px; height: 44px; border-radius: 14px"
+            >
+              <i class="fas fa-shield" style="color: var(--text-primary)"></i>
+            </div>
+            <div class="fw-bold text-white">Stay safe</div>
+          </div>
+          <div style="color: var(--text-secondary); line-height: 1.7">
+            Fake notice detection and safe-handling guidance so you don’t get
+            scammed.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trusted Sources -->
+<section class="trusted-sources py-5" style="position: relative">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto text-center mb-5">
+        <h2 class="display-5 fw-bold text-white mb-3 animate-slide-up">
+          Trusted sources
+        </h2>
+        <p class="lead" style="color: var(--text-secondary); font-size: 1.1rem">
+          All responses are grounded in official Indian and Tamil Nadu
+          government sources
+        </p>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div
+          class="glass-card hover-lift animate-scale-in"
+          style="animation-delay: 0.1s"
+        >
+          <div class="card-body p-4">
+            <h6 class="card-title text-white mb-4 fw-bold fs-5">
+              <i
+                class="fas fa-flag me-2"
+                style="
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                "
+              ></i
+              >National Sources
+            </h6>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)"
+                  >indiankanoon.org</span
+                >
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)"
+                  >gov.in & legislative.gov.in</span
+                >
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)">prsindia.org</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)"
+                  >incometax.gov.in</span
+                >
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)">gst.gov.in</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div
+          class="glass-card hover-lift animate-scale-in"
+          style="animation-delay: 0.2s"
+        >
+          <div class="card-body p-4">
+            <h6 class="card-title text-white mb-4 fw-bold fs-5">
+              <i
+                class="fas fa-map-marker-alt me-2"
+                style="
+                  background: linear-gradient(
+                    135deg,
+                    var(--neural-blue),
+                    var(--activation-blue)
+                  );
+                  -webkit-background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  background-clip: text;
+                "
+              ></i
+              >Tamil Nadu Sources
+            </h6>
+            <ul class="list-unstyled mb-0">
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)">tn.gov.in</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)">law.tn.gov.in</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)">ctd.tn.gov.in</span>
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)"
+                  >tnpolice.gov.in</span
+                >
+              </li>
+              <li class="mb-2">
+                <i class="fas fa-check-circle text-success me-2"></i>
+                <span style="color: var(--text-secondary)"
+                  >tnincometax.gov.in</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section py-5" style="position: relative">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto text-center">
+        <div class="glass-card p-5 animate-slide-up">
+          <h2 class="display-5 fw-bold text-white mb-3">
+            Start your first legal chat
+          </h2>
+          <p
+            class="lead mb-4"
+            style="color: var(--text-secondary); font-size: 1.1rem"
+          >
+            Create an account to save chat history and revisit your answers
+            anytime.
+          </p>
+          <a
+            href="{{ url_for('login', mode='register') }}"
+            class="btn btn-primary btn-lg hover-lift"
+            style="min-width: 220px"
+          >
+            <i class="fas fa-rocket me-2"></i>Start Your Legal Journey
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %} {% block extra_css %}
+<style>
+  .hero-section {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-icon {
+    transition: var(--transition);
+  }
+
+  .card:hover .feature-icon {
+    transform: scale(1.1);
+  }
+
+  @media (max-width: 576px) {
+    .hero-section {
+      min-height: auto !important;
+      padding-top: 2.25rem !important;
+      padding-bottom: 2.25rem !important;
+    }
+  }
+</style>
+{% endblock %}

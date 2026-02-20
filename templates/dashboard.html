@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - NeethiAI{% endblock %}
+
+{% block content %}
+<script>
+// Instant redirect to Chat
+window.location.href = "{{ url_for('chat') }}";
+</script>
+{% endblock %}

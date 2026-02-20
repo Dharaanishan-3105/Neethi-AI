@@ -1,0 +1,27 @@
+{
+  "name": "NeethiAI - Legal Assistant",
+  "short_name": "NeethiAI",
+  "description": "AI-powered legal assistant for Tamil and English queries with document analysis",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/icons/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icons/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["legal", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

@@ -1,0 +1,700 @@
+{% extends "base.html" %} {% block title %}Sign In / Sign Up - NeethiAI{%
+endblock %} {% block head %}
+<meta
+  http-equiv="Cache-Control"
+  content="no-cache, no-store, must-revalidate"
+/>
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<meta name="timestamp" content="{{ moment().format() }}" />
+<!-- FORCE REFRESH: {{ range(1000, 9999) | random }} -->
+{% endblock %} {% block content %} {% set initial_mode = (mode or
+request.args.get('mode') or 'login') %}
+<style>
+  .auth-bg {
+    min-height: calc(100vh - 56px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    padding: 1.25rem;
+  }
+
+  .auth-container {
+    width: 100%;
+    max-width: 1000px;
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    box-shadow: var(--glass-shadow-hover);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    min-height: 600px;
+  }
+
+  .auth-form-section {
+    flex: 1;
+    padding: 3rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background: transparent;
+    position: relative;
+    z-index: 10;
+  }
+
+  .auth-overlay {
+    flex: 1;
+    padding: 3rem;
+    background: linear-gradient(
+      135deg,
+      rgba(37, 99, 235, 0.3),
+      rgba(74, 144, 226, 0.2)
+    );
+    backdrop-filter: var(--backdrop-blur);
+    -webkit-backdrop-filter: var(--backdrop-blur);
+    border-left: 1px solid var(--glass-border);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.6s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Login mode - form on left, overlay on right */
+  .auth-container.login-mode {
+    flex-direction: row;
+  }
+
+  .auth-container.login-mode .auth-overlay {
+    border-top-left-radius: 150px;
+    border-bottom-left-radius: 150px;
+    border-top-right-radius: 24px;
+    border-bottom-right-radius: 24px;
+  }
+
+  /* Register mode - overlay on left, form on right */
+  .auth-container.register-mode {
+    flex-direction: row-reverse;
+  }
+
+  .auth-container.register-mode .auth-overlay {
+    border-top-right-radius: 150px;
+    border-bottom-right-radius: 150px;
+    border-top-left-radius: 24px;
+    border-bottom-left-radius: 24px;
+  }
+
+  .overlay-content {
+    text-align: center;
+  }
+
+  .overlay-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    color: var(--text-primary);
+  }
+
+  .overlay-text {
+    margin-bottom: 2rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    font-size: 1rem;
+  }
+
+  .overlay-btn {
+    background: var(--primary-color);
+    border: 1px solid var(--accent-color);
+    color: var(--text-primary);
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .overlay-btn:hover {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+  }
+
+  .form-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+  }
+
+  .social-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .social-btn {
+    flex: 1;
+    height: 48px;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--backdrop-blur-light);
+    -webkit-backdrop-filter: var(--backdrop-blur-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--text-secondary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .social-btn:hover {
+    transform: translateY(-3px);
+    background: var(--glass-bg-light);
+    color: var(--text-primary);
+    border-color: var(--neural-blue);
+    box-shadow: var(--glass-shadow-hover);
+    text-decoration: none;
+  }
+
+  .divider {
+    text-align: center;
+    margin: 1.5rem 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    position: relative;
+  }
+
+  .divider::before,
+  .divider::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    width: 40%;
+    height: 1px;
+    background: var(--border-color);
+  }
+
+  .divider::before {
+    left: 0;
+  }
+
+  .divider::after {
+    right: 0;
+  }
+
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    background: var(--glass-bg);
+    backdrop-filter: var(--backdrop-blur-light);
+    -webkit-backdrop-filter: var(--backdrop-blur-light);
+    color: var(--text-primary);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--neural-blue);
+    box-shadow:
+      0 0 0 3px rgba(37, 99, 235, 0.2),
+      var(--glass-shadow-hover);
+    background: var(--glass-bg-light);
+    transform: translateY(-2px);
+  }
+
+  .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-secondary);
+  }
+
+  .form-check input[type="checkbox"] {
+    accent-color: var(--accent-color);
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(
+      135deg,
+      var(--neural-blue),
+      var(--activation-blue)
+    );
+    color: var(--text-primary);
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition:
+      width 0.6s,
+      height 0.6s;
+  }
+
+  .submit-btn:hover {
+    background: linear-gradient(
+      135deg,
+      var(--activation-blue),
+      var(--neural-blue-light)
+    );
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+  }
+
+  .submit-btn:hover::before {
+    width: 300px;
+    height: 300px;
+  }
+
+  .form-footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+
+  .form-footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+  }
+
+  .form-footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+  }
+
+  .auth-form {
+    display: none;
+  }
+
+  .auth-form.active {
+    display: block;
+  }
+
+  .switch-text {
+    margin-top: 1rem;
+    text-align: center;
+    color: var(--text-muted);
+  }
+
+  .switch-btn {
+    background: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    transition: all 0.3s;
+  }
+
+  .switch-btn:hover {
+    background: var(--accent-color);
+    color: var(--text-primary);
+  }
+
+  @media (max-width: 768px) {
+    .auth-container {
+      flex-direction: column !important;
+      max-width: 400px;
+    }
+
+    .auth-overlay {
+      display: none !important;
+    }
+
+    .auth-form-section {
+      padding: 1.5rem;
+    }
+
+    .social-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+    }
+
+    .social-btn {
+      height: 44px;
+      font-size: 1.2rem;
+    }
+  }
+</style>
+
+<div class="auth-bg">
+  <div class="auth-container login-mode" id="authContainer">
+    <!-- Form Section -->
+    <div class="auth-form-section">
+      <!-- Login Form -->
+      <form method="POST" class="auth-form active" id="loginForm">
+        <h2 class="form-title">Sign In</h2>
+
+        <div class="social-buttons">
+          <a
+            href="{{ url_for('google_login') }}"
+            class="social-btn"
+            title="Continue with Google"
+          >
+            <i class="fab fa-google"></i>
+          </a>
+          <a
+            href="{{ url_for('github_login') }}"
+            class="social-btn"
+            title="Continue with GitHub"
+          >
+            <i class="fab fa-github"></i>
+          </a>
+          <a
+            href="{{ url_for('linkedin_login') }}"
+            class="social-btn"
+            title="Continue with LinkedIn"
+          >
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+        </div>
+
+        <div class="divider">or sign in with email</div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" name="password" class="form-input" required />
+        </div>
+
+        <div class="form-check">
+          <input type="checkbox" name="remember" id="remember" />
+          <label for="remember">Remember me</label>
+        </div>
+
+        <button type="submit" class="submit-btn">Sign In</button>
+
+        <div class="form-footer">
+          <a href="#" id="forgotPasswordLink">Forgot password?</a>
+        </div>
+
+        <div class="switch-text">
+          Don't have an account?
+          <button type="button" class="switch-btn" id="showRegister">
+            Create Account
+          </button>
+        </div>
+      </form>
+
+      <!-- Register Form -->
+      <form
+        method="POST"
+        action="{{ url_for('register') }}"
+        class="auth-form"
+        id="registerForm"
+      >
+        <h2 class="form-title">Create Account</h2>
+
+        <div class="social-buttons">
+          <a
+            href="{{ url_for('google_login') }}"
+            class="social-btn"
+            title="Continue with Google"
+          >
+            <i class="fab fa-google"></i>
+          </a>
+          <a
+            href="{{ url_for('github_login') }}"
+            class="social-btn"
+            title="Continue with GitHub"
+          >
+            <i class="fab fa-github"></i>
+          </a>
+          <a
+            href="{{ url_for('linkedin_login') }}"
+            class="social-btn"
+            title="Continue with LinkedIn"
+          >
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+        </div>
+
+        <div class="divider">or create account with email</div>
+
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" name="name" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input
+            type="password"
+            name="password"
+            class="form-input"
+            id="regPassword"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <input
+            type="password"
+            name="password_confirm"
+            class="form-input"
+            id="regPasswordConfirm"
+            required
+          />
+        </div>
+
+        <button type="submit" class="submit-btn">Create Account</button>
+
+        <div class="switch-text">
+          Already have an account?
+          <button type="button" class="switch-btn" id="showLogin">
+            Sign In
+          </button>
+        </div>
+      </form>
+
+      <!-- Forgot Password Form -->
+      <form
+        method="POST"
+        action="{{ url_for('forgot_password') }}"
+        class="auth-form"
+        id="forgotForm"
+      >
+        <h2 class="form-title">Reset Password</h2>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" name="email" class="form-input" required />
+        </div>
+
+        <button type="submit" class="submit-btn">Send Reset Link</button>
+
+        <div class="switch-text">
+          Remember your password?
+          <button type="button" class="switch-btn" id="backToLogin">
+            Sign In
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Purple Overlay -->
+    <div class="auth-overlay">
+      <div class="overlay-content">
+        <h3 class="overlay-title" id="overlayTitle">Hello, Friend!</h3>
+        <p class="overlay-text" id="overlayText">
+          Register with your personal details to use all of our features
+        </p>
+        <button class="overlay-btn" id="overlayBtn">SIGN UP</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  console.log("🚀 Auth page loaded at:", new Date().toISOString());
+  console.log("🔄 CACHE BUSTER: Page version 2025-10-02-20:15 - FIXED LAYOUT");
+
+  document.addEventListener("DOMContentLoaded", function () {
+    const container = document.getElementById("authContainer");
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const forgotForm = document.getElementById("forgotForm");
+
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const overlayBtn = document.getElementById("overlayBtn");
+
+    const showRegisterBtn = document.getElementById("showRegister");
+    const showLoginBtn = document.getElementById("showLogin");
+    const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+    const backToLoginBtn = document.getElementById("backToLogin");
+
+    const regPassword = document.getElementById("regPassword");
+    const regPasswordConfirm = document.getElementById("regPasswordConfirm");
+
+    console.log("✅ All elements found:", {
+      container: !!container,
+      loginForm: !!loginForm,
+      registerForm: !!registerForm,
+      overlayTitle: !!overlayTitle,
+      overlayText: !!overlayText,
+      overlayBtn: !!overlayBtn,
+    });
+
+    function showLogin() {
+      console.log("📝 Switching to LOGIN mode");
+
+      // Update container class
+      container.className = "auth-container login-mode";
+
+      // Show/hide forms
+      loginForm.classList.add("active");
+      registerForm.classList.remove("active");
+      forgotForm.classList.remove("active");
+
+      // Update overlay content - encourage new users to register
+      overlayTitle.textContent = "Hello, Friend!";
+      overlayText.textContent =
+        "Register with your personal details to use all of our features";
+      overlayBtn.textContent = "SIGN UP";
+
+      console.log("✅ Login mode activated");
+    }
+
+    function showRegister() {
+      console.log("📝 Switching to REGISTER mode");
+
+      // Update container class
+      container.className = "auth-container register-mode";
+
+      // Show/hide forms
+      loginForm.classList.remove("active");
+      registerForm.classList.add("active");
+      forgotForm.classList.remove("active");
+
+      // Update overlay content - encourage existing users to sign in
+      overlayTitle.textContent = "Welcome Back!";
+      overlayText.textContent =
+        "Enter your personal details to sign in and continue";
+      overlayBtn.textContent = "SIGN IN";
+
+      console.log("✅ Register mode activated");
+    }
+
+    function showForgot() {
+      console.log("📝 Switching to FORGOT PASSWORD mode");
+
+      // Update container class
+      container.className = "auth-container login-mode";
+
+      // Show/hide forms
+      loginForm.classList.remove("active");
+      registerForm.classList.remove("active");
+      forgotForm.classList.add("active");
+
+      // Update overlay content
+      overlayTitle.textContent = "Need Help?";
+      overlayText.textContent =
+        "Don't worry, we'll help you reset your password";
+      overlayBtn.textContent = "SIGN IN";
+
+      console.log("✅ Forgot password mode activated");
+    }
+
+    // Event listeners
+    showRegisterBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      showRegister();
+    });
+
+    showLoginBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      showLogin();
+    });
+
+    overlayBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      if (container.classList.contains("login-mode")) {
+        showRegister();
+      } else {
+        showLogin();
+      }
+    });
+
+    forgotPasswordLink.addEventListener("click", function (e) {
+      e.preventDefault();
+      showForgot();
+    });
+
+    backToLoginBtn.addEventListener("click", function (e) {
+      e.preventDefault();
+      showLogin();
+    });
+
+    // Password confirmation validation
+    function validatePasswords() {
+      if (regPassword.value && regPasswordConfirm.value) {
+        if (regPassword.value !== regPasswordConfirm.value) {
+          regPasswordConfirm.setCustomValidity("Passwords do not match");
+        } else {
+          regPasswordConfirm.setCustomValidity("");
+        }
+      }
+    }
+
+    if (regPassword && regPasswordConfirm) {
+      regPassword.addEventListener("input", validatePasswords);
+      regPasswordConfirm.addEventListener("input", validatePasswords);
+    }
+
+    // Initialize based on URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get("mode") || "{{ initial_mode }}";
+
+    console.log("🎯 Initial mode:", mode);
+
+    if (mode === "register") {
+      showRegister();
+    } else if (mode === "forgot") {
+      showForgot();
+    } else {
+      showLogin();
+    }
+
+    console.log("🎉 Auth system initialized successfully");
+  });
+</script>
+{% endblock %}

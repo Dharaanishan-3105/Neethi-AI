@@ -1,0 +1,698 @@
+{% extends "base.html" %} {% block title %}Profile - NeethiAI{% endblock %} {%
+block content %}
+<div class="container py-5" style="min-height: 100vh">
+  <div class="row">
+    <div class="col-lg-8 mx-auto">
+      <!-- Modern Profile Header Card with Glassmorphism -->
+      <div class="glass-card mb-4 animate-slide-up hover-lift">
+        <div class="card-body p-4">
+          <div class="row align-items-center">
+            <div class="col-md-4 text-center mb-4 mb-md-0">
+              <div class="profile-avatar mb-3 position-relative animate-float">
+                <div
+                  class="glass-card rounded-circle d-inline-flex align-items-center justify-content-center animate-shimmer"
+                  style="width: 120px; height: 120px; padding: 0"
+                >
+                  <i
+                    class="fas fa-user-circle"
+                    style="
+                      font-size: 5rem;
+                      background: linear-gradient(
+                        135deg,
+                        var(--neural-blue),
+                        var(--activation-blue)
+                      );
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                      background-clip: text;
+                    "
+                  ></i>
+                </div>
+                <div
+                  class="position-absolute bottom-0 end-0 bg-success rounded-circle p-2 pulse"
+                  style="
+                    width: 36px;
+                    height: 36px;
+                    border: 3px solid var(--glass-bg);
+                    box-shadow: var(--glass-shadow);
+                  "
+                >
+                  <i
+                    class="fas fa-check text-white"
+                    style="font-size: 0.8rem"
+                  ></i>
+                </div>
+              </div>
+              <h4 class="text-white fw-bold mb-2">{{ current_user.name }}</h4>
+              <p class="text-muted mb-0">{{ current_user.email }}</p>
+            </div>
+
+            <div class="col-md-8">
+              <form>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="name"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-user me-2"
+                        style="
+                          background: linear-gradient(
+                            135deg,
+                            var(--neural-blue),
+                            var(--activation-blue)
+                          );
+                          -webkit-background-clip: text;
+                          -webkit-text-fill-color: transparent;
+                          background-clip: text;
+                        "
+                      ></i
+                      >Full Name
+                    </label>
+                    <div class="glass-card p-3 hover-lift">
+                      <span class="text-white">{{ current_user.name }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="email"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-envelope me-2"
+                        style="
+                          background: linear-gradient(
+                            135deg,
+                            var(--neural-blue),
+                            var(--activation-blue)
+                          );
+                          -webkit-background-clip: text;
+                          -webkit-text-fill-color: transparent;
+                          background-clip: text;
+                        "
+                      ></i
+                      >Email Address
+                    </label>
+                    <div class="glass-card p-3 hover-lift">
+                      <span class="text-white">{{ current_user.email }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="created_at"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-calendar-plus me-2"
+                        style="color: var(--accent-color)"
+                      ></i
+                      >Member Since
+                    </label>
+                    <div
+                      class="p-3"
+                      style="
+                        background: var(--bg-tertiary);
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                      "
+                    >
+                      <span class="text-white"
+                        >{{ current_user.created_at.strftime('%B %d, %Y')
+                        }}</span
+                      >
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="last_login"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-clock me-2"
+                        style="color: var(--accent-color)"
+                      ></i
+                      >Last Login
+                    </label>
+                    <div
+                      class="p-3"
+                      style="
+                        background: var(--bg-tertiary);
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                      "
+                    >
+                      <span class="text-white"
+                        >{{ current_user.last_login.strftime('%B %d, %Y at %I:%M
+                        %p') if current_user.last_login else 'First time'
+                        }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="total_chats"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-comments me-2"
+                        style="color: var(--accent-color)"
+                      ></i
+                      >Total Conversations
+                    </label>
+                    <div
+                      class="p-3"
+                      style="
+                        background: var(--bg-tertiary);
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                      "
+                    >
+                      <span class="text-white fw-bold fs-5"
+                        >{{ current_user.chats|length }}</span
+                      >
+                    </div>
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label
+                      for="status"
+                      class="form-label fw-semibold"
+                      style="color: var(--text-secondary)"
+                    >
+                      <i
+                        class="fas fa-circle me-2"
+                        style="color: var(--accent-color)"
+                      ></i
+                      >Account Status
+                    </label>
+                    <div
+                      class="p-3"
+                      style="
+                        background: var(--bg-tertiary);
+                        border: 1px solid var(--border-color);
+                        border-radius: 8px;
+                      "
+                    >
+                      <span
+                        class="badge {% if current_user.is_active %}bg-success{% else %}bg-secondary{% endif %} px-3 py-2"
+                      >
+                        {% if current_user.is_active %}Active{% else
+                        %}Inactive{% endif %}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modern Account Actions with Glassmorphism -->
+      <div
+        class="glass-card mt-4 animate-scale-in hover-lift"
+        style="animation-delay: 0.2s"
+      >
+        <div class="card-body p-4">
+          <h5 class="mb-4 text-white fw-bold">
+            <i
+              class="fas fa-cog me-2"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--neural-blue),
+                  var(--activation-blue)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            ></i
+            >Account Settings
+          </h5>
+          <div class="row">
+            <div class="col-md-6 mb-4 mb-md-0">
+              <h6 class="text-white mb-3">
+                <i
+                  class="fas fa-shield-alt me-2"
+                  style="color: var(--accent-color)"
+                ></i
+                >Security
+              </h6>
+              <p class="text-muted mb-3">
+                Manage your account security settings
+              </p>
+              <button
+                class="btn btn-primary"
+                onclick="changePassword()"
+                style="background: var(--primary-color); border: none"
+              >
+                <i class="fas fa-key me-2"></i>Change Password
+              </button>
+              <div
+                id="pwForm"
+                class="mt-3 p-3"
+                style="
+                  display: none;
+                  background: var(--bg-tertiary);
+                  border: 1px solid var(--border-color);
+                  border-radius: 8px;
+                "
+              >
+                <div class="mb-2">
+                  <input
+                    type="password"
+                    id="currentPw"
+                    class="form-control"
+                    placeholder="Current password"
+                    style="
+                      background: var(--bg-secondary);
+                      border-color: var(--border-color);
+                      color: var(--text-primary);
+                    "
+                  />
+                </div>
+                <div class="mb-2">
+                  <input
+                    type="password"
+                    id="newPw"
+                    class="form-control"
+                    placeholder="New password"
+                    style="
+                      background: var(--bg-secondary);
+                      border-color: var(--border-color);
+                      color: var(--text-primary);
+                    "
+                  />
+                </div>
+                <button
+                  class="btn btn-sm btn-primary"
+                  onclick="submitPasswordChange()"
+                  style="background: var(--primary-color); border: none"
+                >
+                  Update Password
+                </button>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-white mb-3">
+                <i
+                  class="fas fa-database me-2"
+                  style="color: var(--accent-color)"
+                ></i
+                >Data & Privacy
+              </h6>
+              <p class="text-muted mb-3">
+                Control your data and privacy settings
+              </p>
+              <div class="d-flex flex-wrap gap-2">
+                <button
+                  class="btn btn-outline-light"
+                  onclick="exportData()"
+                  style="
+                    border-color: var(--border-color);
+                    color: var(--text-primary);
+                  "
+                >
+                  <i class="fas fa-download me-2"></i>Export Data
+                </button>
+                <button
+                  class="btn btn-outline-danger"
+                  onclick="clearHistory()"
+                  style="
+                    border-color: var(--danger-color);
+                    color: var(--danger-color);
+                  "
+                >
+                  <i class="fas fa-trash me-2"></i>Clear History
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modern Chat Statistics with Glassmorphism -->
+      <div
+        class="glass-card mt-4 animate-scale-in hover-lift"
+        style="animation-delay: 0.3s"
+      >
+        <div class="card-body p-4">
+          <h5 class="mb-4 text-white fw-bold">
+            <i
+              class="fas fa-chart-pie me-2"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--neural-blue),
+                  var(--activation-blue)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            ></i
+            >Chat Statistics
+          </h5>
+          <div class="row text-center">
+            <div class="col-md-3 mb-3 mb-md-0">
+              <div
+                class="glass-card stat-item p-4 hover-lift animate-scale-in"
+                style="animation-delay: 0.1s"
+              >
+                <h2
+                  class="text-white fw-bold mb-2"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--neural-blue),
+                      var(--activation-blue)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                  "
+                >
+                  {{ current_user.chats|length }}
+                </h2>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-comments me-1"></i>Total Chats
+                </p>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
+              <div
+                class="glass-card stat-item p-4 hover-lift animate-scale-in"
+                style="animation-delay: 0.2s"
+              >
+                <h2
+                  class="text-white fw-bold mb-2"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--neural-blue),
+                      var(--activation-blue)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                  "
+                >
+                  {{ (current_user.chats|selectattr('language', 'equalto',
+                  'ta')|list)|length }}
+                </h2>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-language me-1"></i>Tamil Chats
+                </p>
+              </div>
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
+              <div
+                class="glass-card stat-item p-4 hover-lift animate-scale-in"
+                style="animation-delay: 0.3s"
+              >
+                <h2
+                  class="text-white fw-bold mb-2"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--neural-blue),
+                      var(--activation-blue)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                  "
+                >
+                  {{ (current_user.chats|selectattr('language', 'equalto',
+                  'en')|list)|length }}
+                </h2>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-globe me-1"></i>English Chats
+                </p>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div
+                class="glass-card stat-item p-4 hover-lift animate-scale-in"
+                style="animation-delay: 0.4s"
+              >
+                <h2
+                  class="text-white fw-bold mb-2"
+                  style="
+                    background: linear-gradient(
+                      135deg,
+                      var(--neural-blue),
+                      var(--activation-blue)
+                    );
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                  "
+                >
+                  {{ (current_user.chats|selectattr('feature_used', 'equalto',
+                  'legal_qa')|list)|length }}
+                </h2>
+                <p class="text-muted mb-0">
+                  <i class="fas fa-gavel me-1"></i>Legal Q&A
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modern Recent Activity with Glassmorphism -->
+      <div
+        class="glass-card mt-4 animate-scale-in hover-lift"
+        style="animation-delay: 0.4s"
+      >
+        <div class="card-body p-4">
+          <h5 class="mb-4 text-white fw-bold">
+            <i
+              class="fas fa-history me-2"
+              style="
+                background: linear-gradient(
+                  135deg,
+                  var(--neural-blue),
+                  var(--activation-blue)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              "
+            ></i
+            >Recent Activity
+          </h5>
+          {% if current_user.chats %}
+          <div class="timeline">
+            {% for chat in current_user.chats[-5:] %}
+            <div
+              class="glass-card timeline-item p-3 mb-3 hover-lift animate-slide-up"
+            >
+              <div class="d-flex align-items-start">
+                <div class="timeline-marker me-3 glass-card">
+                  <i
+                    class="fas fa-comment"
+                    style="
+                      background: linear-gradient(
+                        135deg,
+                        var(--neural-blue),
+                        var(--activation-blue)
+                      );
+                      -webkit-background-clip: text;
+                      -webkit-text-fill-color: transparent;
+                      background-clip: text;
+                    "
+                  ></i>
+                </div>
+                <div class="timeline-content flex-grow-1">
+                  <h6 class="mb-2 text-white fw-semibold">
+                    {{ chat.question[:50] }}{% if chat.question|length > 50
+                    %}...{% endif %}
+                  </h6>
+                  <p class="text-muted mb-2">
+                    {{ chat.answer[:100] }}{% if chat.answer|length > 100
+                    %}...{% endif %}
+                  </p>
+                  <small
+                    class="text-muted d-flex align-items-center flex-wrap gap-2"
+                  >
+                    <i class="fas fa-clock me-1"></i>
+                    {{ chat.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                    <span class="badge" style="background: var(--primary-color)"
+                      >{{ chat.feature_used }}</span
+                    >
+                  </small>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-center py-5">
+            <div
+              class="p-5 d-inline-block"
+              style="
+                background: var(--bg-tertiary);
+                border: 1px solid var(--border-color);
+                border-radius: 8px;
+              "
+            >
+              <i
+                class="fas fa-comments"
+                style="font-size: 4rem; color: var(--text-muted)"
+              ></i>
+              <h6 class="text-white mt-3">No activity yet</h6>
+              <p class="text-muted mb-0">
+                Start chatting to see your activity here!
+              </p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_css %}
+<style>
+  body {
+    background: var(--bg-primary);
+    min-height: 100vh;
+  }
+
+  .profile-avatar {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-avatar .glass-card {
+    transition: var(--transition);
+  }
+
+  .profile-avatar:hover .glass-card {
+    transform: scale(1.05);
+  }
+
+  .stat-item {
+    transition: var(--transition);
+  }
+
+  .stat-item:hover {
+    transform: translateY(-4px);
+  }
+
+  .timeline {
+    position: relative;
+  }
+
+  .timeline-item {
+    transition: var(--transition);
+    border-left: 3px solid rgba(255, 255, 255, 0.3);
+    padding-left: 1rem;
+  }
+
+  .timeline-marker {
+    width: 40px;
+    height: 40px;
+    background: var(--bg-tertiary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid var(--border-color);
+    flex-shrink: 0;
+  }
+
+  .timeline-content {
+    transition: var(--transition);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .stat-item {
+      margin-bottom: 1rem;
+    }
+  }
+</style>
+{% endblock %} {% block extra_js %}
+<script>
+  function changePassword() {
+    const f = document.getElementById("pwForm");
+    if (f) f.style.display = f.style.display === "none" ? "block" : "none";
+  }
+
+  function exportData() {
+    fetch("/api/profile/export")
+      .then((r) => r.json())
+      .then((data) => {
+        const blob = new Blob([JSON.stringify(data, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "neethi_chats.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+  }
+
+  function clearHistory() {
+    if (!confirm("This will delete all your chats permanently. Continue?"))
+      return;
+    fetch("/api/profile/clear-history", { method: "POST" })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) {
+          location.reload();
+        } else if (res.error) {
+          alert(res.error);
+        }
+      });
+  }
+
+  function submitPasswordChange() {
+    const currentPw = document.getElementById("currentPw").value.trim();
+    const newPw = document.getElementById("newPw").value.trim();
+    if (!currentPw || !newPw) {
+      alert("Please enter both current and new passwords.");
+      return;
+    }
+    fetch("/api/profile/change-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        current_password: currentPw,
+        new_password: newPw,
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        if (res.ok) {
+          alert("Password updated successfully.");
+          document.getElementById("pwForm").style.display = "none";
+          document.getElementById("currentPw").value = "";
+          document.getElementById("newPw").value = "";
+        } else if (res.error) {
+          alert(res.error);
+        }
+      });
+  }
+</script>
+{% endblock %}
