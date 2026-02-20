@@ -396,9 +396,8 @@ copies or substantial portions of the Software.
 
 ## 📞 Support & Contact
 
-- **🌐 Website**: [neethiai.com](https://neethiai.com)
-- **🐛 Issues**: [GitHub Issues](https://github.com/yourusername/neethiai/issues)
-- **📖 Documentation**: [RENDER_DEPLOYMENT.md](RENDER_DEPLOYMENT.md)
+- **🌐 Website**: [NeethiAI](https://neethiai.com)
+- **🐛 Issues**: [GitHub Issues](https://github.com/Dharaanishan-3105/Neethi-AI/issues)
 - **📧 Email**: support@neethiai.com
 
 ---
