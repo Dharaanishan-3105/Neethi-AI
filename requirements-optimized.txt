@@ -1,0 +1,30 @@
+# Core Flask dependencies
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.3
+Werkzeug==2.3.7
+psycopg2-binary==2.9.7
+Authlib==1.2.1
+
+# Document processing (lighter alternatives)
+PyPDF2==3.0.1
+python-docx==0.8.11
+Pillow==10.0.1
+
+# AI and ML (CPU-only versions for faster install)
+torch==2.0.1+cpu
+torchvision==0.15.2+cpu
+easyocr==1.7.0
+opencv-python-headless==4.8.1.78
+numpy==1.24.3
+
+# Web scraping and API
+requests==2.31.0
+beautifulsoup4==4.12.2
+duckduckgo-search==3.9.6
+google-generativeai==0.3.2
+
+# Utilities
+langdetect==1.0.9
+waitress==2.1.2
+python-dotenv==1.0.0
