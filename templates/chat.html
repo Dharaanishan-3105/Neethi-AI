@@ -886,7 +886,17 @@ block content %}
   let waveInterval = null;
   let ttsSpeaking = false;
   let preferredVoices = [];
+  let pendingDocumentFilename = null; // Document uploaded; user can Send for summary
   // E2EE removed
+
+  function updateSendButtonState() {
+    const input = document.getElementById("messageInput");
+    const sendButton = document.getElementById("sendButton");
+    if (!sendButton) return;
+    const canSend =
+      input && (input.value.trim() || pendingDocumentFilename) && !isLoading;
+    sendButton.disabled = !canSend;
+  }
 
   // Auto-resize textarea
   document
@@ -894,10 +904,7 @@ block content %}
     .addEventListener("input", function () {
       this.style.height = "auto";
       this.style.height = Math.min(this.scrollHeight, 200) + "px";
-
-      // Enable/disable send button
-      const sendButton = document.getElementById("sendButton");
-      sendButton.disabled = !this.value.trim() || isLoading;
+      updateSendButtonState();
     });
 
   // Send message on Enter (but allow Shift+Enter for new line)
@@ -906,7 +913,7 @@ block content %}
     .addEventListener("keydown", function (e) {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        if (!isLoading && this.value.trim()) {
+        if (!isLoading && (this.value.trim() || pendingDocumentFilename)) {
           sendMessage();
         }
       }
@@ -914,23 +921,33 @@ block content %}
 
   function sendMessage() {
     const input = document.getElementById("messageInput");
-    const message = input.value.trim();
+    let message = input.value.trim();
 
-    if (!message || isLoading) return;
+    if (isLoading) return;
+    if (!message && !pendingDocumentFilename) return;
 
-    // Add user message to chat (chatId will be added after API response)
-    addMessage(message, "user");
+    // If user only has document attached (no text), backend will treat as "Summarize this document"
+    if (!message && pendingDocumentFilename) {
+      message = "";
+      addMessage(
+        "📎 Attached: " + pendingDocumentFilename + " — getting summary...",
+        "user",
+      );
+    } else {
+      if (pendingDocumentFilename) {
+        addMessage("📎 " + pendingDocumentFilename + "\n\n" + message, "user");
+      } else {
+        addMessage(message, "user");
+      }
+    }
 
-    // Clear input
     input.value = "";
     input.style.height = "auto";
-    document.getElementById("sendButton").disabled = true;
-
-    // Show loading
+    pendingDocumentFilename = null;
+    updateSendButtonState();
     showLoading();
 
-    // Send plain text only
-    return doChatRequest(message);
+    return doChatRequest(message || "");
   }
 
   function doChatRequest(payloadQuestion) {
@@ -949,6 +966,7 @@ block content %}
       .then((response) => response.json())
       .then((data) => {
         hideLoading();
+        updateSendButtonState();
         if (data.error) {
           addMessage(
             "Sorry, I encountered an error: " + data.error,
@@ -1007,6 +1025,7 @@ block content %}
       })
       .catch((error) => {
         hideLoading();
+        updateSendButtonState();
         addMessage(
           "Sorry, I encountered an error. Please try again.",
           "assistant",
@@ -1198,8 +1217,9 @@ block content %}
       return;
     }
     if (!recognition) {
-      recognition = new (window.SpeechRecognition ||
-        window.webkitSpeechRecognition)();
+      recognition = new (
+        window.SpeechRecognition || window.webkitSpeechRecognition
+      )();
       recognition.continuous = true; // keep listening until user stops
       recognition.interimResults = true;
       recognition.lang = forcedLanguage === "ta" ? "ta-IN" : "en-IN";
@@ -1989,6 +2009,9 @@ block content %}
 
     const formData = new FormData();
     formData.append("file", file);
+    if (currentConversationId) {
+      formData.append("conversation_id", currentConversationId);
+    }
 
     // Show loading
     showLoading();
@@ -2032,6 +2055,9 @@ block content %}
           );
         } else {
           if (isImage) {
+            if (data.conversation_id) {
+              currentConversationId = data.conversation_id;
+            }
             const risk = data.risk_level
               ? `<div><strong>Risk:</strong> ${data.risk_level} (Score: ${data.fraud_score || 0}/100)</div>`
               : "";
@@ -2068,23 +2094,16 @@ block content %}
               speakMultilingual(lastResponse);
             }
           } else {
-            const sourcesHtml =
-              data.sources && data.sources.length
-                ? `\n\n<strong>Sources:</strong><br>${data.sources.map((s) => `<a href="${s}" target="_blank">${s}</a>`).join("<br>")}`
-                : "";
-            const message = `📄 <strong>Document Summary</strong><br>${data.summary || "No summary"}<br>${sourcesHtml}`;
-            addMessage(message, "assistant");
-            lastResponse = data.summary || "";
-
-            // Voice output for document summary
-            if (lastResponse) {
-              console.log("Speaking document summary");
-              speakMultilingual(lastResponse);
-            }
+            // Document (PDF/DOCX): show in chat and allow user to type + Send for summary
+            addMessage("📎 Attached: " + file.name, "user");
+            addMessage(
+              "Document attached. Type your question or click <strong>Send</strong> for a summary.",
+              "assistant",
+            );
+            pendingDocumentFilename = file.name;
+            updateSendButtonState();
           }
-          // No global play button
-          // Refresh history if server created a chat record
-          if (data.chat_id) {
+          if (data.chat_id || data.conversation_id) {
             loadChatHistory();
           }
         }

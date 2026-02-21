@@ -363,6 +363,7 @@ class Conversation(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)  # For soft deletion
+    document_context = db.Column(db.Text, nullable=True)  # Attached doc/notice for follow-ups
 
     # Relationships
     chats = db.relationship("Chat", backref="conversation", lazy=True, cascade="all, delete-orphan")
@@ -544,7 +545,7 @@ def get_language_prompt(language):
 def configure_gemini_api():
     api_key = os.getenv(
         "GEMINI_API_KEY",
-        "AIzaSyDfRl3xspnAg7HGVe-vddb-bQOW4kpifvQ",
+        "Key",
     )
     try:
         if not api_key:
@@ -829,7 +830,22 @@ def is_creator_query(user_text: str) -> bool:
     if not user_text:
         return False
     text = user_text.lower().strip()
-    # Fast keyword hits
+    # Tamil: who created you / who made you / creator of Neethi etc.
+    tamil_creator = [
+        "உன்னை யார் உருவாக்கினார்கள்",
+        "உங்கள் உருவாக்கியவர்",
+        "யார் உன்னை உருவாக்கினார்கள்",
+        "நீதியை யார் உருவாக்கினார்கள்",
+        "நீதி யார் உருவாக்கினார்கள்",
+        "நீதி யாருடையது",
+        "உருவாக்கியவர்",
+        "உன்னை யார் செய்தார்கள்",
+        "யார் உன்னை செய்தார்கள்",
+    ]
+    for t in tamil_creator:
+        if t in text:
+            return True
+    # Fast keyword hits (English)
     keywords = [
         "who created you",
         "who is your creator",
@@ -861,7 +877,8 @@ def is_creator_query(user_text: str) -> bool:
         "owner of neethi",
         "owner of neethi ai",
         "owner of neethiai",
-        "google developer team" "who is father of you",
+        "google developer team",
+        "who is father of you",
     ]
     if any(k in text for k in keywords):
         return True
@@ -880,7 +897,12 @@ def is_creator_query(user_text: str) -> bool:
         return False
 
 
-def get_creator_response() -> str:
+def get_creator_response(language: str = "en") -> str:
+    if language == "ta":
+        return (
+            "நீதி AI ஐ டாராநீஷன் S மற்றும் ஹரிஹரன் G உருவாக்கியுள்ளனர் "
+            "மற்றும் பராமரிக்கிறார்கள். அவர்களே நீதி AI இன் உருவாக்குநர்கள்/உரிமையாளர்கள்."
+        )
     return (
         "NeethiAI was created and is maintained by Dharaanishan S and Hariharan G. "
         "They are the developers/owners behind NeethiAI."
@@ -914,12 +936,32 @@ def get_tax_advice(user_query, model):
 
 
 # Fake Notice Detection
+def _is_ocr_error_text(s: str) -> bool:
+    """Treat known OCR error/placeholder strings as 'no text' so we can try other engines."""
+    if not s or not s.strip():
+        return True
+    lower = s.strip().lower()
+    if len(lower) < 20:
+        return False
+    errors = (
+        "ocr processing failed",
+        "unable to extract text",
+        "unable to extract sufficient",
+        "please ensure the image is clear",
+        "please try with a clearer",
+    )
+    return any(e in lower for e in errors)
+
+
 def preprocess_image(image):
-    # Ensure RGB
-    if image.mode != "RGB":
+    # Ensure RGB (PIL Image or RGB numpy)
+    if hasattr(image, "mode") and image.mode != "RGB":
         image = image.convert("RGB")
     img = np.array(image)
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if len(img.shape) == 3:
+        gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+    else:
+        gray = img
     # Improve contrast
     gray = cv2.equalizeHist(gray)
     blur = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -930,115 +972,60 @@ def preprocess_image(image):
 def extract_text_easyocr(image):
     global reader
     try:
-        # Simple approach - use current directory for models
         import os
 
         model_dir = os.path.join(os.getcwd(), "easyocr_models")
         os.makedirs(model_dir, exist_ok=True)
 
-        # Detect GPU availability (CUDA) for EasyOCR
-        gpu_available = False
-        try:
-            import torch  # type: ignore
-
-            gpu_available = bool(torch.cuda.is_available())
-            if gpu_available:
-                print(f"GPU detected: {torch.cuda.get_device_name(0)}")
-            else:
-                print("No GPU detected via torch.cuda")
-        except Exception as e:
-            print(f"Torch GPU detection failed: {e}")
+        # Use English-only to avoid multilingual checkpoint mismatch (143 vs 127 chars).
+        # Init once and reuse so we don't re-load models on every image.
+        if reader is None:
             gpu_available = False
-
-        # Additional CUDA check
-        if not gpu_available:
             try:
-                import subprocess
+                import torch  # type: ignore
 
-                result = subprocess.run(["nvidia-smi"], capture_output=True, text=True, timeout=5)
-                if result.returncode == 0:
-                    gpu_available = True
-                    print("GPU detected via nvidia-smi")
+                gpu_available = bool(torch.cuda.is_available())
             except Exception:
-                pass
-
-        try:
-            # For faster processing, use English-only model on CPU
-            if not gpu_available:
-                print("Using English-only model for faster CPU processing")
+                gpu_available = False
+            try:
                 reader = easyocr.Reader(
-                    ["en"], gpu=False, download_enabled=True, model_storage_directory=model_dir
-                )
-                print("EasyOCR initialized with English-only model (CPU optimized)")
-            else:
-                # Try multilingual model first (English + Tamil) when GPU is available
-                print(f"Initializing EasyOCR with GPU={gpu_available}")
-                reader = easyocr.Reader(
-                    ["en", "ta"],
+                    ["en"],
                     gpu=gpu_available,
                     download_enabled=True,
                     model_storage_directory=model_dir,
                 )
-                print("EasyOCR initialized successfully with multilingual model")
-
-            # Warmup to compile kernels and cache models (improves first-call latency)
-            try:
-                import numpy as _np
-
-                _warm = _np.zeros((64, 64, 3), dtype=_np.uint8)
-                _ = reader.readtext(_warm, detail=0, paragraph=False)
-                print("EasyOCR warmup completed")
-            except Exception as _w:
-                print(f"EasyOCR warmup skipped: {_w}")
-        except Exception as e:
-            print(f"Model initialization failed: {e}, falling back to English only")
-            # Fallback to English only
-            reader = easyocr.Reader(
-                ["en"], gpu=False, download_enabled=True, model_storage_directory=model_dir
-            )
-            print("EasyOCR initialized with English-only model (fallback)")
-
-        try:
-            results = reader.readtext(image, detail=0, paragraph=True)
-        except Exception:
-            # Reinitialize with English only and retry
-            reader = easyocr.Reader(
-                ["en"], gpu=gpu_available, download_enabled=True, model_storage_directory=model_dir
-            )
-            results = reader.readtext(image, detail=0, paragraph=True)
-        text = "\n".join([r.strip() for r in results if isinstance(r, str)])
-
-        # No cleanup needed for model directory
-    except Exception as e:
-        app.logger.error(f"EasyOCR processing failed: {e}")
-        text = "OCR processing failed. Please try with a clearer image."
-
-        # If EasyOCR failed completely, try a simple fallback
-        if not text or len(text.strip()) < 3:
-            try:
-                # Simple fallback: return a message indicating OCR failed
-                return (
-                    "Unable to extract text from image. Please ensure the "
-                    "image is clear and contains readable text."
+                app.logger.info("EasyOCR initialized (en only, gpu=%s)", gpu_available)
+            except Exception as e:
+                app.logger.warning("EasyOCR GPU init failed: %s, using CPU", e)
+                reader = easyocr.Reader(
+                    ["en"],
+                    gpu=False,
+                    download_enabled=True,
+                    model_storage_directory=model_dir,
                 )
-            except Exception:
-                return "OCR processing failed. Please try with a clearer image."
+                app.logger.info("EasyOCR initialized (en only, CPU)")
 
-        # Fallback to Tesseract if EasyOCR produced little/no text
+        # Ensure image is 3-channel for EasyOCR (BGR or RGB both work)
+        if hasattr(image, "shape") and len(image.shape) == 2:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+        results = reader.readtext(image, detail=0, paragraph=True)
+        text = "\n".join([r.strip() for r in results if isinstance(r, str)])
+        # Tesseract fallback inside try when we have little text
         if (not text or len(text.strip()) < 6) and _has_tesseract:
             try:
                 if isinstance(image, np.ndarray):
                     pil_img = Image.fromarray(image)
                 else:
-                    # image could be thresholded numpy already
                     pil_img = Image.fromarray(image)
                 t_text = pytesseract.image_to_string(pil_img)
-                base_len = len((text or "").strip())
-                if t_text and len(t_text.strip()) > base_len:
+                if t_text and len(t_text.strip()) > len((text or "").strip()):
                     text = t_text
             except Exception:
                 pass
         return text
+    except Exception as e:
+        app.logger.error(f"EasyOCR processing failed: {e}")
+        return "OCR processing failed. Please try with a clearer image."
 
 
 def extract_text_paddle(image: np.ndarray) -> str:
@@ -2152,6 +2139,10 @@ def api_chat():
     force_language = raw_force_lang.strip().lower() if isinstance(raw_force_lang, str) else None
     conversation_id = data.get("conversation_id", None)  # Get conversation ID from frontend
 
+    # Allow empty question only when user has attached a document (requesting summary)
+    doc_in_session = bool(session.get("doc_context", "").strip())
+    if not question and doc_in_session:
+        question = "Summarize this document and explain the main points."
     app.logger.info(f"Final question after all parsing: '{question}'")
     if not question:
         app.logger.error("Question is empty after all parsing attempts")
@@ -2185,19 +2176,28 @@ def api_chat():
         conversation_id = conversation.id
         db.session.commit()
 
-    # Short-circuit for creator/owner questions
+    # Persist session document into conversation so follow-ups in same chat work
+    if session.get("doc_context"):
+        conversation.document_context = (session.get("doc_context") or "").strip() or None
+        session.pop("doc_context", None)
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+    # Short-circuit for creator/owner questions (English or Tamil)
     try:
         if is_creator_query(question):
-            answer = get_creator_response()
+            lang = force_language or detect_language(question)
+            answer = get_creator_response(language=lang if lang in ("ta", "en") else "en")
             sources = []
             feature_used = "about_creator"
-            # Save to database
             chat = Chat(
                 user_id=current_user.id,
                 question=question,
                 answer=answer,
                 sources=json.dumps(sources),
-                language="en",
+                language=lang if lang in ("ta", "en") else "en",
                 feature_used=feature_used,
                 conversation_id=conversation_id,
             )
@@ -2404,29 +2404,54 @@ def api_chat():
             )
         except Exception:
             current_time_note = "\n\n[Server Time unavailable]\n"
-        doc_ctx = session.get("doc_context")
+        doc_ctx = (conversation.document_context or session.get("doc_context") or "").strip()
         if doc_ctx:
             try:
-                prompt = (
-                    "You are NeethiAI, a legal AI assistant specializing in "
-                    "Indian law.\n\n"
-                    f"User question: {question}\n\n"
-                    "Relevant document content:\n"
-                    f"{doc_ctx[:8000]}\n\n"
-                    "Answer clearly and helpfully. If citing laws/sections, "
-                    "be precise. Keep it user-friendly.\n"
-                    f"{current_time_note}"
+                # Prefer summarization when user asks for summary / overview
+                ql = question.lower().strip()
+                summary_phrases = (
+                    "summarize this document",
+                    "summarize this",
+                    "document summary",
+                    "summary of this",
+                    "what is this document about",
+                    "summarize",
+                    "give me a summary",
+                    "main points",
                 )
-                resp = model.generate_content(prompt)
-                answer = resp.text if resp and resp.text else "I couldn't generate a response."
+                if any(p in ql for p in summary_phrases) or len(ql.split()) <= 4:
+                    try:
+                        urls = get_legal_sources(question)
+                    except Exception:
+                        urls = []
+                    answer = summarize_legal_issue(doc_ctx, question, urls or [], model)
+                    sources = urls or []
+                    feature_used = "document_analysis"
+                else:
+                    prompt = (
+                        "You are NeethiAI, a legal AI assistant specializing in "
+                        "Indian law.\n\n"
+                        f"User question: {question}\n\n"
+                        "Relevant document content:\n"
+                        f"{doc_ctx[:8000]}\n\n"
+                        "Answer clearly and helpfully. If citing laws/sections, "
+                        "be precise. Keep it user-friendly.\n"
+                        f"{current_time_note}"
+                    )
+                    resp = model.generate_content(prompt)
+                    answer = resp.text if resp and resp.text else "I couldn't generate a response."
+                    try:
+                        urls = get_legal_sources(question)
+                    except Exception:
+                        urls = []
+                    sources = urls
+                    feature_used = "doc_qa"
+            except Exception as e:
+                app.logger.warning(f"Document QA failed: {e}")
                 try:
                     urls = get_legal_sources(question)
                 except Exception:
                     urls = []
-                sources = urls
-                feature_used = "doc_qa"
-            except Exception:
-                urls = get_legal_sources(question)
                 if urls:
                     answer = enhanced_legal_query_with_gatekeeper(
                         question + current_time_note, model, force_language=force_language
@@ -2671,6 +2696,10 @@ def edit_chat(chat_id):
                     # Use the same logic as the main chat API
                     language = detect_language(new_question)
                     doc_ctx = session.get("doc_context")
+                    if not doc_ctx and chat.conversation_id:
+                        conv = Conversation.query.get(chat.conversation_id)
+                        if conv and conv.document_context:
+                            doc_ctx = conv.document_context
 
                     if doc_ctx:
                         prompt = f"""
@@ -3029,6 +3058,15 @@ def detect_fake_notice_api():
         app.logger.error("Fake-notice upload error: empty filename")
         return jsonify({"error": "No file selected"}), 400
 
+    # Optional: link to current conversation for follow-up questions
+    conv_id_raw = request.form.get("conversation_id")
+    conversation_id = None
+    if conv_id_raw:
+        try:
+            conversation_id = int(conv_id_raw)
+        except (TypeError, ValueError):
+            pass
+
     try:
         # Read raw bytes once for reliability across WSGI servers
         try:
@@ -3050,48 +3088,88 @@ def detect_fake_notice_api():
 
         if file.filename and file.filename.lower().endswith((".jpg", ".jpeg", ".png")):
             image = Image.open(img_io)
-            # Normalize size for better OCR - mobile images often need different handling
-            if max(image.size) > 1600:
-                scale = 1600.0 / max(image.size)
+            if image is None:
+                return jsonify({"error": "Could not open image"}), 400
+            try:
+                from PIL import ImageOps
+
+                image = ImageOps.exif_transpose(image) or image
+            except Exception:
+                pass
+            if image is None:
+                return jsonify({"error": "Could not process image"}), 400
+            # Keep higher resolution for documents (e.g. legal letters)
+            max_side = 2400
+            if max(image.size) > max_side:
+                scale = max_side / max(image.size)
                 new_size = (int(image.size[0] * scale), int(image.size[1] * scale))
                 image = image.resize(new_size, Image.Resampling.LANCZOS)
-            elif max(image.size) < 400:  # Mobile images might be too small
+            elif max(image.size) < 400:
                 scale = 400.0 / max(image.size)
                 new_size = (int(image.size[0] * scale), int(image.size[1] * scale))
                 image = image.resize(new_size, Image.Resampling.LANCZOS)
 
-            # First try OCR on the original image (RGB)
             if image.mode != "RGB":
                 image = image.convert("RGB")
             np_img = np.array(image)
+
+            def _usable(t):  # noqa: ANN001
+                if not t or not isinstance(t, str):
+                    return False
+                return len(t.strip()) >= 10 and not _is_ocr_error_text(t)
+
+            text = ""
             try:
-                text = extract_text_easyocr(np_img)
+                t0 = extract_text_easyocr(np_img)
+                if _usable(t0):
+                    text = t0
             except Exception as e:
                 app.logger.error(f"EasyOCR failed: {e}")
-                text = "OCR processing failed. Please try with a clearer image."
 
-            # Enhanced mobile fallback - try multiple preprocessing techniques
-            if not text or len(text.strip()) < 10:
-                app.logger.info("Trying enhanced preprocessing for mobile image")
-                # Try different preprocessing techniques
+            if not _usable(text):
                 try:
-                    processed_image = preprocess_image(image)
-                    text = extract_text_easyocr(processed_image)
+                    processed = preprocess_image(image)
+                    if len(processed.shape) == 2:
+                        processed = cv2.cvtColor(processed, cv2.COLOR_GRAY2RGB)
+                    t1 = extract_text_easyocr(processed)
+                    s1 = (t1 or "").strip()
+                    if _usable(t1) and len(s1) > len(text or ""):
+                        text = t1 or ""
                 except Exception as e:
                     app.logger.error(f"Preprocessed OCR failed: {e}")
-                    text = "OCR processing failed. Please try with a clearer image."
 
-                # If still no text, try with different preprocessing
-                if not text or len(text.strip()) < 10:
-                    # Convert to grayscale and enhance contrast
-                    try:
-                        gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
-                        enhanced = cv2.equalizeHist(gray)
-                        enhanced_rgb = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2RGB)
-                        text = extract_text_easyocr(enhanced_rgb)
-                    except Exception as e:
-                        app.logger.error(f"Enhanced OCR failed: {e}")
-                        text = "OCR processing failed. Please try with a clearer image."
+            if not _usable(text):
+                try:
+                    gray = cv2.cvtColor(np_img, cv2.COLOR_RGB2GRAY)
+                    enhanced = cv2.equalizeHist(gray)
+                    enhanced_rgb = cv2.cvtColor(enhanced, cv2.COLOR_GRAY2RGB)
+                    t2 = extract_text_easyocr(enhanced_rgb)
+                    s2 = (t2 or "").strip()
+                    if _usable(t2) and len(s2) > len(text or ""):
+                        text = t2 or ""
+                except Exception as e:
+                    app.logger.error(f"Enhanced OCR failed: {e}")
+
+            if not _usable(text) and _has_tesseract:
+                try:
+                    t3 = pytesseract.image_to_string(image)
+                    s3 = (t3 or "").strip()
+                    if _usable(t3) and len(s3) > len(text or ""):
+                        text = t3 or ""
+                except Exception as e:
+                    app.logger.error(f"Tesseract failed: {e}")
+
+            if not _usable(text) and _has_paddleocr:
+                try:
+                    t4 = extract_text_paddle(np_img)
+                    s4 = (t4 or "").strip()
+                    if _usable(t4) and len(s4) > len(text or ""):
+                        text = t4 or ""
+                except Exception as e:
+                    app.logger.error(f"PaddleOCR failed: {e}")
+
+            if not _usable(text):
+                text = ""
         elif file.filename and file.filename.lower().endswith(".pdf"):
             # Reuse the raw bytes for PDF parsing
             text = extract_text_from_pdf(io.BytesIO(raw_bytes))
@@ -3123,22 +3201,53 @@ def detect_fake_notice_api():
             recommendation = "Upload a clearer image for analysis"
             sources = []
         else:
-            result_text, risk_level, fraud_score, recommendation = detect_fake_notice(text)
+            try:
+                result_text, risk_level, fraud_score, recommendation = detect_fake_notice(text)
+            except Exception:
+                app.logger.exception("detect_fake_notice failed")
+                result_text = (
+                    "Analysis could not be completed. Please try again with a "
+                    "clearer image or document."
+                )
+                risk_level = "UNKNOWN"
+                fraud_score = 0
+                recommendation = "Retry with a clearer upload."
             try:
                 sources = get_legal_sources("fake legal notice")
             except Exception as e:
                 app.logger.warning(f"Failed to get legal sources: {e}")
                 sources = []
 
-        # Save analysis to chat history
+        # Get or create conversation so follow-ups about this notice work
+        conv = None
+        if conversation_id:
+            conv = Conversation.query.filter_by(
+                id=conversation_id, user_id=current_user.id, is_active=True
+            ).first()
+        if not conv:
+            conv = Conversation(
+                user_id=current_user.id,
+                title="[Fake Notice] " + (file.filename or "Image checked"),
+            )
+            db.session.add(conv)
+            db.session.flush()
+        conv.document_context = (text or "").strip() or None
+        conv.updated_at = datetime.utcnow()
+        try:
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+
+        # Save analysis to chat history (linked to conversation)
         try:
             saved = Chat(
                 user_id=current_user.id,
-                question="[Fake Notice] Image checked",
+                question="[Fake Notice] " + (file.filename or "Image checked"),
                 answer=result_text,
                 sources=json.dumps(sources),
                 language="en",
                 feature_used="fake_notice",
+                conversation_id=conv.id,
             )
             db.session.add(saved)
             db.session.commit()
@@ -3157,11 +3266,13 @@ def detect_fake_notice_api():
                 "recommendation": recommendation,
                 "sources": sources,
                 "chat_id": chat_id,
+                "conversation_id": conv.id,
             }
         )
     except Exception as e:
         app.logger.exception("Fake notice detection failed")
-        return jsonify({"error": str(e)}), 500
+        err_msg = str(e) if str(e) else "Fake notice detection failed. Please try again."
+        return jsonify({"error": err_msg}), 500
 
 
 @app.route("/api/feedback/verification", methods=["POST"])
@@ -3529,6 +3640,28 @@ if __name__ == "__main__":
         try:
             with app.app_context():
                 db.create_all()
+                # Add document_context to conversation if missing (existing DBs)
+                try:
+                    dialect = db.engine.dialect.name
+                    if dialect == "postgresql":
+                        sql = (
+                            "ALTER TABLE conversation ADD COLUMN IF NOT EXISTS "
+                            "document_context TEXT"
+                        )
+                    elif dialect == "sqlite":
+                        sql = "ALTER TABLE conversation ADD COLUMN document_context TEXT"
+                    else:
+                        sql = None
+                    if sql:
+                        db.session.execute(text(sql))
+                        db.session.commit()
+                except Exception as col_err:
+                    err_lower = str(col_err).lower()
+                    if "duplicate column" in err_lower or "already exists" in err_lower:
+                        pass
+                    else:
+                        app.logger.warning("Optional migration (document_context): %s", col_err)
+                    db.session.rollback()
                 _init_postgres_rls_pool_hooks()
                 _ensure_postgres_rls()
                 print("✓ Database tables created successfully")
