@@ -762,7 +762,7 @@ def scrape_web_text(url):
             )
         }
         response = requests.get(url, timeout=10, headers=headers)
-        soup = BeautifulSoup(response.content, "html.parser")
+        soup = BeautifulSoup(response.content.decode("utf-8"), "html.parser")
         paragraphs = soup.find_all("p")
         text = " ".join([para.get_text() for para in paragraphs])
         return text[:4000]
@@ -2921,7 +2921,7 @@ def fetch_rss_items(url, max_items=5):
         resp = requests.get(url, timeout=10, headers=headers)
         if resp.status_code != 200:
             return []
-        soup = BeautifulSoup(resp.content, "xml")
+        soup = BeautifulSoup(resp.content.decode("utf-8"), "xml")
         items = []
         for item in soup.find_all("item")[:max_items]:
             title = (item.title.get_text(strip=True) if item.title else "").strip()

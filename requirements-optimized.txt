@@ -9,7 +9,7 @@ Authlib==1.2.1
 # Document processing (lighter alternatives)
 PyPDF2==3.0.1
 python-docx==0.8.11
-Pillow==10.0.1
+Pillow==10.3.0
 
 # AI and ML (CPU-only versions for faster install)
 # Note: torch and torchvision are installed separately from PyTorch's CPU index in Dockerfile
